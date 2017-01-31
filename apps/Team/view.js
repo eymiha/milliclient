@@ -1,5 +1,5 @@
 import { addChildApplication } from "../director.js"
-import _ from "underscore"
+import vis from "vis"
 
 let app = {}
 
@@ -13,14 +13,14 @@ export function bootstrap() {
 export function mount() {
   return new Promise((resolve, reject) => {
     console.log(`${app.name} is mounted`)
-    $(`#${app.id}`).html("Menu <ul></ul>")
-    $(`#${app.id}`).show()
-    addChildApplication('IT Applications Team', 'team', '/apps/Team/workings.js').then((item) => {
-      app.items.push(item)
-      $(`#${app.id} ul`).append(`<li id="${item.id}_item">${item.name}</li>`)
-      item.bind(`#${item.id}_item`)
-    })
-    resolve()
+    let graph = app.context.getGraph()
+    let options = {
+      nodes: { widthConstraint: { maximum: 150 }, shape: "box" },
+      edges: { arrows: { to : true}, length: 50, color: "#ffffff" },
+      physics: { barnesHut: { gravitationalConstant: -10000 } }
+    }
+    app.network = new vis.Network($("#teamview")[0], graph.data, options)
+    resolve(app)
   })
 }
 
@@ -43,8 +43,15 @@ export function loadApp(name, id) {
   return new Promise((resolve, reject) => {
     app.name = name
     app.id = id
-    app.items = []
     console.log(`${app.name} is loaded`)
     resolve(app)
   })
+}
+
+app.setContext = (context) => {
+  app.context = context
+}
+
+app.fit = () => {
+  app.network.fit()
 }
